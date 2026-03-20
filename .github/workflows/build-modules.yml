@@ -106,9 +106,11 @@ jobs:
 
       - name: Code Coverage Flag
         run: |
-          FLAG="${{ matrix.module }}"
+          FLAG="${MATRIX_MODULE}"
           FLAG=${FLAG// } # replace spaces
           echo FLAG=${FLAG} >> $GITHUB_ENV # update GitHub ENV vars
+        env:
+          MATRIX_MODULE: ${{ matrix.module }}
 
       - name: Code Coverage
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
@@ -137,7 +139,7 @@ jobs:
       - name: Read Module Manifest
         id: read-module-manifest
         run: |
-          content=`cat "${{ matrix.module }}/manifest.json"`
+          content=`cat "${MATRIX_MODULE}/manifest.json"`
           # the following lines are only required for multi line json
           content="${content//$'\n'/''}"
           content="${content//$'\r'/''}"
@@ -145,6 +147,8 @@ jobs:
           echo $content
           echo "$content"
           echo "manifest=$content" >> $GITHUB_OUTPUT
+        env:
+          MATRIX_MODULE: ${{ matrix.module }}
 
       - name: Log in to the Container registry
         if: ${{ github.event_name == 'push' }}
