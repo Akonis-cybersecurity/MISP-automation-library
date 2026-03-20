@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2026-03-20 - 1.1.3
+
+### Fixed
+
+- Apply linters
+
+## 2026-02-27 - 1.1.1
+
+### Added
+
+- Add debug-level observability logs across the full connection path to facilitate self service troubleshooting.
+
 ## 2026-01-23 - 1.1.0
 
 ### Added
