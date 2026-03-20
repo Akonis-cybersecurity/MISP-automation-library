@@ -15,8 +15,12 @@ defaults:
   run:
     working-directory: _utils
 
+permissions: {}
+
 jobs:
   check_modules:
+    permissions:
+      contents: read  # for actions/checkout to fetch code
     runs-on: ubuntu-latest
 
     steps:

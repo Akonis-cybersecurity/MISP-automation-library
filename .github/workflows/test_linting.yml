@@ -1,8 +1,12 @@
 name: Check linting
 on: push
 
+permissions: {}
+
 jobs:
   linter:
+    permissions:
+      contents: read  # for actions/checkout to fetch code
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python 3.10
