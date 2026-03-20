@@ -33,7 +33,7 @@ jobs:
         name: List modules having changed files
         run: |
           if ${{ github.event_name == 'workflow_dispatch' }}; then
-            echo "matrix=$(cut -d "/" -f1 <<< "$(ls -a */manifest.json)" | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+            echo "matrix=$(cut -d "/" -f1 <<< "$(ls -a -- */manifest.json)" | jq -R -s -c 'split("\n")[:-1]')" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if ${{ github.event_name == 'pull_request' }}; then
@@ -43,7 +43,7 @@ jobs:
             start=${{ github.event.before }}
             end=${{ github.event.after }}
           fi
-          echo "matrix=$(comm -12  <(cut -d "/" -f1 <<< "$(git diff --name-only -r $start $end)" | sort | uniq) <(cut -d "/" -f1 <<< "$(ls -a */manifest.json)") | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+          echo "matrix=$(comm -12  <(cut -d "/" -f1 <<< "$(git diff --name-only -r "$start" "$end")" | sort | uniq) <(cut -d "/" -f1 <<< "$(ls -a -- */manifest.json)") | jq -R -s -c 'split("\n")[:-1]')" >> "$GITHUB_OUTPUT"
 
   test:
     permissions:
@@ -108,7 +108,7 @@ jobs:
         run: |
           FLAG="${MATRIX_MODULE}"
           FLAG=${FLAG// } # replace spaces
-          echo FLAG=${FLAG} >> $GITHUB_ENV # update GitHub ENV vars
+          echo "FLAG=${FLAG}" >> "$GITHUB_ENV" # update GitHub ENV vars
         env:
           MATRIX_MODULE: ${{ matrix.module }}
 
@@ -139,14 +139,14 @@ jobs:
       - name: Read Module Manifest
         id: read-module-manifest
         run: |
-          content=`cat "${MATRIX_MODULE}/manifest.json"`
+          content=$(cat "${MATRIX_MODULE}/manifest.json")
           # the following lines are only required for multi line json
           content="${content//$'\n'/''}"
           content="${content//$'\r'/''}"
           # end of optional handling for multi line json
-          echo $content
           echo "$content"
-          echo "manifest=$content" >> $GITHUB_OUTPUT
+          echo "$content"
+          echo "manifest=$content" >> "$GITHUB_OUTPUT"
         env:
           MATRIX_MODULE: ${{ matrix.module }}
 
