@@ -196,7 +196,26 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
+disallow_incomplete_defs = false
 disallow_untyped_calls = false
+warn_return_any = false
+
+# Legacy code: not subject to strict typing
+[[tool.mypy.overrides]]
+module = [
+    "misp.misp2stix2_mapping",
+    "misp.misp_to_stix_converter",
+    "misp.misp_to_stix",
+    "misp.misp_query",
+    "misp.publish_to_misp",
+    "misp.trigger",
+]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+check_untyped_defs = false
+warn_return_any = false
+warn_unreachable = false
 
 [tool.pylint.main]
 py-version = "3.11"

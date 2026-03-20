@@ -1,5 +1,5 @@
 {
-  "uuid": "9bfd6d9d-3f64-4ec0-bdb5-6253677af677",
+  "uuid": "9bfd6d9d-3f64-4ec0-bdb5-6253677af671",
   "name": "MISP IDS Attributes to IOC Collection",
   "docker_parameters": "trigger-misp-ids-to-ioc-collection",
   "description": "Periodically retrieves IDS-flagged attributes from a MISP instance and pushes them to a Sekoia.io IOC Collection",
@@ -10,6 +10,7 @@
     "properties": {
       "ioc_collection_server": {
         "type": "string",
+        "default": "https://api.sekoia.io",
         "description": "Sekoia.io API server URL (e.g., https://api.sekoia.io)"
       },
       "ioc_collection_uuid": {
@@ -28,7 +29,6 @@
       }
     },
     "required": [
-      "ioc_collection_server",
       "ioc_collection_uuid"
     ]
   },
