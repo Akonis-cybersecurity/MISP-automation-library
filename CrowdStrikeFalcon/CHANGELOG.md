@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2026-02-23 - 1.25.11
+
+### Changed
+
+- Upgrade sekoia-automation-sdk to 1.22.3
+
+## 2026-02-11 - 1.25.10
+
+### Added
+
+- Add asset connector mapping files for CrowdStrike Falcon device and user assets
+
+## 2025-02-09 - 1.25.9
+
+### Changed
+
+- Upgrade sekoia-automation-sdk to 1.22.2
+
+## 2026-02-03 - 1.25.8
+
+### Changed
+
+- Update device asset connector
+
+## 2026-02-03 - 1.25.7
+
+### Changed
+
+- Change user asset connector endpoint to use new identity api
+- Reactivate user asset connector
+
+## 2026-01-29 - 1.25.6
+
+### Changed
+
+- Update asset connector name
+
 ## 2026-01-23 - 1.25.5
 
 ### Changed

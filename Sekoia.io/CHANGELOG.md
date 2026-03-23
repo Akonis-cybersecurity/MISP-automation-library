@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2026-03-17 - 2.71.0
+
+### Added
+
+- Add custom status and verdict triggers and actions for alert
+
+## 2026-02-25 - 2.70.0
+
+### Added
+
+- Add a test to check if we can update an asset with a list of tags
+- 
+## 2026-02-27 - 2.69.2
+
+### Fixed
+
+- Add check for `indicators` field before main logic
+
+## 2026-02-10 - 2.69.1
+
+### Added
+
+- Add optional `indicator` field in `AddIOCtoIOCCollectionAction`
+
+## 2026-02-10 - 2.69.0
+
+### Fixed
+
+- Add check for `indicators` field in `AddIOCtoIOCCollectionAction`
+
 ## 2026-01-20 - 2.68.29
 
 ### Fixed

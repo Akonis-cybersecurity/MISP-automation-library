@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2026-02-20 - 1.21.8
+
+### Fixed
+
+- Fix device asset boot_time field to use float timestamp instead of integer
+- Fix device asset vendor_name to use actual model name from agent data instead of hardcoded value
+
+## 2026-02-11 - 1.21.7
+
+### Added
+
+- Add asset connector mapping files for SentinelOne device assets
+
+## 2025-02-09 - 1.21.6
+
+### Changed
+
+- Upgrade sekoia-automation-sdk to 1.22.2
+
+## 2026-01-21 - 1.21.5
+
+### Fixed
+
+- Allow nullable values in proxyStates and containerizedWorkloadCounts fields in the SentinelOne data model to prevent validation errors
+## 2026-01-29 - 1.21.4
+
+### Changed
+
+- Update asset connector name
 ## 2026-01-23 - 1.21.3
 
 ### Changed
@@ -18,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Added internals field to SentinelOne asset connectors
+
 
 ## 2024-12-22 - 1.21.1
 

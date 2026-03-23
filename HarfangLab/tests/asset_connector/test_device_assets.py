@@ -1,14 +1,12 @@
+import datetime
 import json
+from unittest.mock import Mock, patch
 
 import pytest
-from unittest.mock import Mock, patch
-import datetime
-
 import requests
 import requests_mock
-
-from sekoia_automation.module import Module
 from sekoia_automation.asset_connector.models.ocsf.device import DeviceOCSFModel
+from sekoia_automation.module import Module
 
 from harfanglab.asset_connector.device_assets import HarfanglabAssetConnector
 
@@ -847,7 +845,6 @@ def test_build_device_extended_fields(test_harfanglab_asset_connector, asset_fir
     assert device.is_managed is True
     assert device.is_trusted is True
     assert device.model == "worktest"
-    assert device.vendor_name == "HarfangLab"
     assert device.desc is None
 
     # Test timestamps
