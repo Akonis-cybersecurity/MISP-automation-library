@@ -84,10 +84,14 @@ class SecurityAlertsTrigger(_SEKOIANotificationBaseTrigger):
             },
             "custom_status": {
                 "name": alert.get("custom_status", {}).get("label"),
+                "level": alert.get("custom_status", {}).get("level"),
+                "stage": alert.get("custom_status", {}).get("stage"),
                 "uuid": alert.get("custom_status", {}).get("uuid"),
             },
             "verdict": {
                 "name": alert.get("verdict", {}).get("label"),
+                "level": alert.get("verdict", {}).get("level"),
+                "stage": alert.get("verdict", {}).get("stage"),
                 "uuid": alert.get("verdict", {}).get("uuid"),
             },
             "created_at": alert.get("created_at"),
@@ -129,6 +133,7 @@ class SecurityAlertsTrigger(_SEKOIANotificationBaseTrigger):
                 "comments": False,
                 "countermeasures": False,
                 "history": False,
+                "custom_status": True,
             },
         )
 
