@@ -11,7 +11,6 @@ if __name__ == "__main__":
     module.register(MISPToSTIXAction, "convert-misp-to-stix")
     module.register(PublishToMISPAction, "publish-to-misp")
 
-    # Register new trigger
     module.register(MISPIDSAttributesToIOCCollectionTrigger, "trigger-misp-ids-to-ioc-collection")
 
     module.run()
