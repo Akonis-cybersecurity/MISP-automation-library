@@ -145,7 +145,6 @@ jobs:
           content="${content//$'\r'/''}"
           # end of optional handling for multi line json
           echo "$content"
-          echo "$content"
           echo "manifest=$content" >> "$GITHUB_OUTPUT"
         env:
           MATRIX_MODULE: ${{ matrix.module }}
