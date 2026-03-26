@@ -70,10 +70,10 @@ jobs:
         id: detect-pm
         run: |
           if [ -f "${MODULE_PATH}/uv.lock" ]; then
-            echo "package_manager=uv" >> $GITHUB_OUTPUT
+            echo "package_manager=uv" >> "$GITHUB_OUTPUT"
             echo "Detected uv project"
           else
-            echo "package_manager=poetry" >> $GITHUB_OUTPUT
+            echo "package_manager=poetry" >> "$GITHUB_OUTPUT"
             echo "Defaulting to Poetry"
           fi
         env:
@@ -152,7 +152,7 @@ jobs:
 
       - name: Log in to the Container registry
         if: ${{ github.event_name == 'push' }}
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -160,7 +160,7 @@ jobs:
 
       - name: Log in to the secondary Container registry
         if: ${{ github.event_name == 'push' }}
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: ${{ env.SECONDARY_REGISTRY }}
           username: ${{ secrets.SECONDARY_REGISTRY_USERNAME }}
