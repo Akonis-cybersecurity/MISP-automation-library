@@ -41,7 +41,7 @@ class TestMISPIDSAttributesToIOCCollectionTrigger:
         trigger.configuration = {
             "ioc_collection_server": "https://api.sekoia.io",
             "ioc_collection_uuid": "test-collection-uuid",
-            "publish_timestamp": "1",
+            "lookback_days": "1",
             "sleep_time": "300",
         }
 
@@ -50,12 +50,12 @@ class TestMISPIDSAttributesToIOCCollectionTrigger:
         return trigger
 
     @pytest.fixture
-    def mock_session(self):
-        """Fixture that patches requests.Session and returns the mock session instance."""
-        with patch("misp.trigger_misp_ids_attributes_to_ioc_collection.requests.Session") as mock_cls:
-            session = MagicMock()
-            mock_cls.return_value = session
-            yield session
+    def mock_session(self, trigger):
+        """Fixture that injects a mock HTTP session into the trigger and prevents initialize_http_session from replacing it."""
+        session = MagicMock()
+        trigger.http_session = session
+        trigger.initialize_http_session = Mock()
+        return session
 
     # ------------------------------------------------------------------ #
     # Configuration properties
@@ -69,9 +69,9 @@ class TestMISPIDSAttributesToIOCCollectionTrigger:
         trigger.configuration = {"sleep_time": "600"}
         assert trigger.sleep_time == 600
 
-    def test_publish_timestamp_default(self, trigger):
+    def test_lookback_days_default(self, trigger):
         trigger.configuration = {}
-        assert trigger.publish_timestamp == "1"
+        assert trigger.lookback_days == "1"
 
     def test_ioc_collection_server(self, trigger):
         assert trigger.ioc_collection_server == "https://api.sekoia.io"
@@ -178,22 +178,24 @@ class TestMISPIDSAttributesToIOCCollectionTrigger:
         }
 
     # ------------------------------------------------------------------ #
-    # Session configuration in push_to_sekoia
+    # HTTP session initialization
     # ------------------------------------------------------------------ #
 
-    def test_session_never_uses_proxy(self, trigger, mock_session):
-        """Test that Sekoia API calls never go through a proxy (trust_env=False)."""
-        trigger.module.configuration["http_proxy"] = "http://proxy.example.com:8080"
-        trigger.module.configuration["https_proxy"] = "https://proxy.example.com:8443"
+    def test_initialize_http_session_defaults(self, trigger):
+        """Test that the HTTP session is configured with secure defaults (trust_env=False, verify=True)."""
+        trigger.initialize_http_session()
 
-        resp = Mock(status_code=200)
-        resp.json.return_value = {"created": 1, "updated": 0, "ignored": 0}
-        mock_session.post.return_value = resp
+        assert trigger.http_session is not None
+        assert trigger.http_session.trust_env is False
+        assert trigger.http_session.verify is True
 
-        trigger.push_to_sekoia(["1.1.1.1"])
+    def test_initialize_http_session_verify_ssl_disabled(self, trigger):
+        """Test that verify_ssl=False disables TLS verification in the session."""
+        trigger.configuration["verify_ssl"] = False
+        trigger.initialize_http_session()
 
-        assert mock_session.trust_env is False
-        assert mock_session.verify is False
+        assert trigger.http_session is not None
+        assert trigger.http_session.verify is False
 
     # ------------------------------------------------------------------ #
     # Initialization
@@ -210,7 +212,7 @@ class TestMISPIDSAttributesToIOCCollectionTrigger:
         mock_pymisp.assert_called_once_with(
             url="https://misp.example.com",
             key="test_misp_api_key",
-            ssl=False,
+            ssl=True,
             debug=False,
         )
 
@@ -228,7 +230,7 @@ class TestMISPIDSAttributesToIOCCollectionTrigger:
         mock_pymisp.assert_called_once_with(
             url="https://misp.example.com",
             key="test_misp_api_key",
-            ssl=False,
+            ssl=True,
             debug=False,
             proxies={
                 "http": "http://proxy.example.com:8080",
@@ -322,7 +324,7 @@ class TestMISPIDSAttributesToIOCCollectionTrigger:
             trigger.initialize_misp_client()
 
     def test_initialize_cache_success(self, trigger):
-        trigger.configuration["publish_timestamp"] = "7"
+        trigger.configuration["lookback_days"] = "7"
         trigger.initialize_cache()
 
         assert trigger.processed_attributes is not None
@@ -330,7 +332,7 @@ class TestMISPIDSAttributesToIOCCollectionTrigger:
         assert trigger.processed_attributes.ttl == 7 * 24 * 3600
 
     def test_initialize_cache_error(self, trigger):
-        trigger.configuration["publish_timestamp"] = "invalid"
+        trigger.configuration["lookback_days"] = "invalid"
 
         with pytest.raises(Exception):
             trigger.initialize_cache()
@@ -632,6 +634,12 @@ class TestMISPIDSAttributesToIOCCollectionTrigger:
         result = trigger.push_to_sekoia([])
         assert result == 0
         trigger.log.assert_called()
+
+    def test_push_to_sekoia_no_session(self, trigger):
+        """Test that push_to_sekoia raises RuntimeError when http_session is not initialized."""
+        trigger.http_session = None
+        with pytest.raises(RuntimeError, match="HTTP session not initialized"):
+            trigger.push_to_sekoia(["1.1.1.1"])
 
     def test_push_to_sekoia_missing_api_key(self, trigger):
         """Test push_to_sekoia returns 0 when sekoia_api_key is missing."""

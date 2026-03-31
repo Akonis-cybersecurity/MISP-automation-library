@@ -20,12 +20,21 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
 
     misp_client: PyMISP | None
     processed_attributes: TTLCache[str, bool] | None
+    http_session: requests.Session | None
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.misp_client = None
         self.processed_attributes = None
+        self.http_session = None
+
+    def initialize_http_session(self) -> None:
+        """Initialize the HTTP session used to push IOCs to Sekoia."""
+        session = requests.Session()
+        session.verify = self.verify_ssl
+        session.trust_env = False
+        self.http_session = session
 
     @property
     def sleep_time(self) -> int:
@@ -33,9 +42,9 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
         return int(self.configuration.get("sleep_time", 300))
 
     @property
-    def publish_timestamp(self) -> str:
-        """Get publish timestamp window in days."""
-        return str(self.configuration.get("publish_timestamp", "1"))
+    def lookback_days(self) -> str:
+        """Get the number of days to look back when retrieving attributes."""
+        return str(self.configuration.get("lookback_days", "1"))
 
     @property
     def ioc_collection_server(self) -> str:
@@ -51,6 +60,11 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
     def sekoia_api_key(self) -> str:
         """Get Sekoia API key."""
         return str(self.module.configuration.get("sekoia_api_key", ""))
+
+    @property
+    def verify_ssl(self) -> bool:
+        """Whether to verify TLS certificates for HTTP requests."""
+        return bool(self.configuration.get("verify_ssl", True))
 
     @property
     def proxies(self) -> dict[str, str] | None:
@@ -114,7 +128,7 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
             misp_kwargs: dict[str, Any] = {
                 "url": misp_url,
                 "key": misp_api_key,
-                "ssl": False,
+                "ssl": self.verify_ssl,
                 "debug": False,
             }
             if current_proxies:
@@ -154,6 +168,12 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
                 level="error",
             )
             raise
+        except requests.exceptions.SSLError as error:
+            self.log(
+                message=f"SSL error connecting to MISP server: {error}",
+                level="error",
+            )
+            raise
         except requests.exceptions.ConnectionError as error:
             self.log(
                 message=f"Connection error to MISP server ({misp_url}): {error}",
@@ -163,12 +183,6 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
         except requests.exceptions.Timeout as error:
             self.log(
                 message=f"Timeout connecting to MISP server ({misp_url}): {error}",
-                level="error",
-            )
-            raise
-        except requests.exceptions.SSLError as error:
-            self.log(
-                message=f"SSL error connecting to MISP server: {error}",
                 level="error",
             )
             raise
@@ -188,8 +202,8 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
     def initialize_cache(self) -> None:
         """Initialize processed attributes cache with TTL."""
         try:
-            # TTL = publish_timestamp in days * seconds per day
-            cache_ttl = abs(int(self.publish_timestamp)) * 24 * 3600
+            # TTL = lookback_days * seconds per day
+            cache_ttl = abs(int(self.lookback_days)) * 24 * 3600
             self.processed_attributes = TTLCache(maxsize=100000, ttl=cache_ttl)
             self.log(
                 message=f"Cache initialized with TTL={cache_ttl}s",
@@ -202,19 +216,19 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
             )
             raise
 
-    def fetch_attributes(self, publish_timestamp: str) -> list[MISPAttribute]:
+    def fetch_attributes(self, lookback_days: str) -> list[MISPAttribute]:
         """
         Fetch IDS-flagged attributes from MISP.
 
         Args:
-            publish_timestamp: Time window (e.g., '1', '7' for days)
+            lookback_days: Number of days to look back (e.g., '1', '7')
 
         Returns:
             List of MISPAttribute objects
         """
         try:
             self.log(
-                message=f"Fetching MISP attributes with to_ids=1, published timestamp and attribute date from less than {publish_timestamp}d ago",
+                message=f"Fetching MISP attributes with to_ids=1, published timestamp and attribute date from less than {lookback_days}d ago",
                 level="info",
             )
 
@@ -231,8 +245,8 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
                 controller="attributes",
                 to_ids=1,  # Only IDS-flagged attributes
                 pythonify=True,  # Return Python objects
-                publish_timestamp=f"{publish_timestamp}d",
-                timestamp=f"{publish_timestamp}d",  # Filter on attribute modification date, not just event publication date
+                publish_timestamp=f"{lookback_days}d",
+                timestamp=f"{lookback_days}d",  # Filter on attribute modification date, not just event publication date
             )
             elapsed_time = time.time() - start_time
 
@@ -470,13 +484,12 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
             max_retries = 3
             success = False
 
-            session = requests.Session()
-            session.verify = False
-            session.trust_env = False
+            if self.http_session is None:
+                raise RuntimeError("HTTP session not initialized")
 
             while retry_count < max_retries and not success:
                 try:
-                    response = session.post(
+                    response = self.http_session.post(
                         url,
                         json=payload,
                         headers=headers,
@@ -581,7 +594,7 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
         self.log(
             message=f"Configuration summary: "
             f"sleep_time={self.sleep_time}s, "
-            f"publish_timestamp={self.publish_timestamp}d, "
+            f"lookback_days={self.lookback_days}d, "
             f"ioc_collection_server={self.ioc_collection_server}, "
             f"ioc_collection_uuid={'configured' if self.ioc_collection_uuid else 'MISSING'}",
             level="info",
@@ -622,6 +635,12 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
 
             # Initialize components
             self.log(
+                message="Initializing HTTP session...",
+                level="info",
+            )
+            self.initialize_http_session()
+
+            self.log(
                 message="Initializing MISP client...",
                 level="info",
             )
@@ -660,7 +679,7 @@ class MISPIDSAttributesToIOCCollectionTrigger(Trigger):
         while self.running:
             try:
                 # Fetch IDS attributes from MISP
-                attributes = self.fetch_attributes(self.publish_timestamp)
+                attributes = self.fetch_attributes(self.lookback_days)
 
                 # Filter by supported types
                 supported_attributes = self.filter_supported_types(attributes)

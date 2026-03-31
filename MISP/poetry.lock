@@ -5189,10 +5189,7 @@ files = [
 [package.extras]
 cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and python_version < \"3.14\"", "cffi (>=2.0.0b0) ; platform_python_implementation != \"PyPy\" and python_version >= \"3.14\""]
 
-[extras]
-async = ["aiohttp"]
-
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "5389ef0671d0ee9f50eaae47a8efe70826df950e3bdf6ecab6e23bf34fad6ece"
+content-hash = "08a6c970a60bf032f67b82d47199c4c2d233998f458d3110eb03a6187e37acd2"
